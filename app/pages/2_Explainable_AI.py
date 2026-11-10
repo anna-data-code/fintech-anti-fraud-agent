@@ -95,7 +95,7 @@ div[data-testid="stVerticalBlock"] {gap:.55rem;}
 </style>
 """, unsafe_allow_html=True)
 
-st.markdown('<div class="xai-eyebrow">PAYSIM / MODEL TRANSPARENCY</div><div class="xai-title">Explainable AI</div><div class="xai-sub">Transaction-level SHAP explanation · XGBoost · Historical synthetic dataset</div>', unsafe_allow_html=True)
+st.markdown('<div class="xai-eyebrow">PAYSIM / MODEL TRANSPARENCY</div><div class="xai-title">Explainable AI</div><div class="xai-sub">Transaction-level SHAP explanations · XGBoost Fraud Detection Model</div>', unsafe_allow_html=True)
 
 try:
     model, df = load_model(), load_data()
@@ -219,7 +219,7 @@ with right:
 
 st.markdown('<div class="xai-note"><span style="color:#F17C94">●</span> Pink increases the model fraud score. &nbsp; <span style="color:#54D4BE">●</span> Teal decreases it. &nbsp; SHAP explains model behavior, not causality.</div>', unsafe_allow_html=True)
 
-with st.expander("SHAP diagnostics · feature values · methodological limitations", expanded=False):
+with st.expander("Model Diagnostics · SHAP Validation", expanded=False):
     a, b, c = st.columns(3)
     a.metric("Baseline margin", f"{baseline:+.4f}")
     b.metric("Reconstructed margin", f"{reconstructed:+.4f}")
@@ -227,6 +227,6 @@ with st.expander("SHAP diagnostics · feature values · methodological limitatio
     if consistency_gap > 1e-3:
         st.warning("SHAP reconstruction differs from the model raw margin. Verify explainer/model compatibility.")
     st.dataframe(ranked, hide_index=True, width="stretch")
-    st.warning("The model uses post-transaction balances and derived balance errors. These may introduce target leakage. Explanations show what the trained model learned; they are not evidence of causal fraud indicators or suitability for live decisions.")
 
-st.caption("Research prototype · Synthetic PaySim data · Selection limited to first 200,000 rows · Not live monitoring")
+st.caption("PaySim Dataset · XGBoost Model · Transaction-level Explainability")
+
