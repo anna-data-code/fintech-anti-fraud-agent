@@ -1,0 +1,27 @@
+{
+  "model": "Leakage-aware baseline XGBoost",
+  "dataset": "PaySim",
+  "features": [
+    "step",
+    "amount",
+    "oldbalanceOrg",
+    "oldbalanceDest",
+    "type_TRANSFER"
+  ],
+  "split": "Temporal, by transaction step",
+  "cutoff_step": 595,
+  "train_rows": 2719123,
+  "test_rows": 51286,
+  "train_fraud": 6559,
+  "test_fraud": 1654,
+  "threshold": 0.5,
+  "precision": 0.5288743882544862,
+  "recall": 0.9800483675937122,
+  "f1": 0.6870099597372324,
+  "pr_auc": 0.9348967521177792,
+  "roc_auc": 0.9969226773868245,
+  "true_negatives": 48188,
+  "false_positives": 1444,
+  "false_negatives": 33,
+  "true_positives": 1621
+}

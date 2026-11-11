@@ -1,0 +1,59 @@
+{
+  "model": "Leakage-aware XGBoost",
+  "features": [
+    "step",
+    "amount",
+    "oldbalanceOrg",
+    "oldbalanceDest",
+    "type_TRANSFER"
+  ],
+  "split": "Temporal train/validation/test",
+  "train_cutoff": 446,
+  "test_cutoff": 595,
+  "selection_rule": "Maximize validation precision with recall >= 0.95",
+  "constraint_met": true,
+  "selected_threshold": 0.95,
+  "validation_selection": {
+    "threshold": 0.95,
+    "precision": 0.5348753162269606,
+    "recall": 0.9536082474226805,
+    "f1": 0.6853438295901829,
+    "false_positives": 1287,
+    "false_negatives": 72
+  },
+  "test": {
+    "rows": 51286,
+    "fraud": 1654,
+    "precision": 0.6670886075949367,
+    "recall": 0.9558645707376058,
+    "f1": 0.7857852882703777,
+    "pr_auc": 0.9403394112387031,
+    "roc_auc": 0.9971323889412533,
+    "tn": 48843,
+    "fp": 789,
+    "fn": 73,
+    "tp": 1581
+  },
+  "test_threshold_comparison": [
+    {
+      "threshold": 0.5,
+      "precision": 0.33099719663596316,
+      "recall": 0.9993954050785974,
+      "f1": 0.4972924187725632,
+      "false_positives": 3341,
+      "false_negatives": 1,
+      "true_positives": 1653,
+      "true_negatives": 46291
+    },
+    {
+      "threshold": 0.95,
+      "precision": 0.6670886075949367,
+      "recall": 0.9558645707376058,
+      "f1": 0.7857852882703777,
+      "false_positives": 789,
+      "false_negatives": 73,
+      "true_positives": 1581,
+      "true_negatives": 48843
+    }
+  ]
+}
