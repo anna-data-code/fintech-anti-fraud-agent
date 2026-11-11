@@ -36,6 +36,7 @@ C = {
 # STYLING
 # ============================================================
 
+
 st.markdown(
     """
     <style>
@@ -46,63 +47,62 @@ st.markdown(
 
     .block-container {
         max-width: 1450px;
-        padding-top: 1.1rem;
-        padding-bottom: 0.6rem;
+        padding-top: clamp(0.55rem, 1.5vh, 1.1rem);
+        padding-bottom: 0.9rem;
     }
 
-    /* Only style specific elements */
     .fi-eyebrow {
         color: #54D6C1;
-        font-size: 11px;
+        font-size: 10px;
         font-weight: 700;
-        letter-spacing: 1.5px;
-        margin-bottom: 5px;
+        letter-spacing: 1.4px;
+        margin-bottom: 3px;
     }
 
     .fi-title {
         color: #F4F7FB;
-        font-size: 27px;
+        font-size: clamp(21px, 2vw, 27px);
         font-weight: 750;
-        line-height: 1.2;
-        margin: 0 0 5px 0;
+        line-height: 1.15;
+        margin: 0 0 3px;
     }
 
     .fi-subtitle {
         color: #A0ADBD;
-        font-size: 12px;
-        line-height: 1.4;
-        margin-bottom: 16px;
+        font-size: 11px;
+        line-height: 1.35;
+        margin-bottom: 12px;
     }
 
     .fi-section {
         color: #F4F7FB;
-        font-size: 15px;
+        font-size: 13px;
         font-weight: 650;
-        margin-top: 12px;
-        margin-bottom: 8px;
+        margin-top: 14px;
+        margin-bottom: 9px;
     }
 
     [data-testid="stMetric"] {
         background: #1C2430;
         border: 1px solid #303D4D;
-        border-radius: 13px;
-        padding: 12px 14px;
+        border-radius: 12px;
+        padding: 8px 12px;
     }
 
     [data-testid="stMetricLabel"] p {
         color: #A0ADBD !important;
-        font-size: 12px !important;
+        font-size: 11px !important;
     }
 
     [data-testid="stMetricValue"] {
         color: #F4F7FB !important;
-        font-size: 23px !important;
+        font-size: clamp(17px, 1.8vw, 23px) !important;
         font-weight: 700 !important;
     }
 
     [data-testid="stPlotlyChart"] {
         border: 1px solid #303D4D;
-        border-radius: 13px;
+        border-radius: 12px;
         overflow: hidden;
     }
 
@@ -114,11 +114,24 @@ st.markdown(
     header[data-testid="stHeader"] {
         background: transparent;
     }
+
+    @media (max-width: 700px) {
+        .fi-title {
+            font-size: 22px;
+        }
+
+        .fi-section {
+            font-size: 13px;
+        }
+
+        [data-testid="stMetricValue"] {
+            font-size: 18px !important;
+        }
+    }
     </style>
     """,
     unsafe_allow_html=True,
 )
-
 
 # ============================================================
 # DATA
@@ -189,8 +202,7 @@ st.markdown(
         Fraud Overview
     </div>
     <div class="fi-subtitle">
-        Historical transaction analytics ·
-        Synthetic dataset · Not live monitoring
+        Historical Transaction Analytics · Fraud Pattern Intelligence
     </div>
     """,
     unsafe_allow_html=True,
@@ -302,7 +314,7 @@ fig_activity.add_trace(
 )
 
 st.plotly_chart(
-    chart_style(fig_activity, height=190),
+    chart_style(fig_activity, height=200),
     use_container_width=True,
     config={"displayModeBar": False},
 )
@@ -349,7 +361,7 @@ with left:
     )
 
     st.plotly_chart(
-        chart_style(fig_cases, height=175),
+        chart_style(fig_cases, height=180),
         use_container_width=True,
         config={"displayModeBar": False},
     )
@@ -373,27 +385,8 @@ with right:
     )
 
     st.plotly_chart(
-        chart_style(fig_rate, height=175),
+        chart_style(fig_rate, height=180),
         use_container_width=True,
         config={"displayModeBar": False},
     )
 
-
-# ============================================================
-# FOOTER
-# ============================================================
-
-st.markdown(
-    """
-    <div style="
-        color:#8292A5;
-        font-size:10px;
-        text-align:right;
-        margin-top:6px;
-    ">
-        PaySim synthetic data · Historical analysis ·
-        No live transaction monitoring
-    </div>
-    """,
-    unsafe_allow_html=True,
-)

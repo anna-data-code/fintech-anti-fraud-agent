@@ -88,7 +88,14 @@ div[data-testid="stVerticalBlock"] {gap:.55rem;}
 .xai-title {font-size:1.65rem;line-height:1.15;font-weight:760;color:#F1F6FA;margin:0;}
 .xai-sub {font-size:.78rem;color:#A9B8C8;margin:5px 0 13px;}
 .xai-label {font-size:.77rem;font-weight:750;color:#D5E1EC;margin:5px 0 6px;}
-.xai-card {background:linear-gradient(140deg,#1C2938,#202E40);border:1px solid #334459;border-radius:14px;padding:14px 17px;}
+.xai-card {
+    background: linear-gradient(140deg,#1C2938,#202E40);
+    border: 1px solid #334459;
+    border-radius: 12px;
+    padding: 12px 15px;
+    font-size: .84rem;
+    line-height: 1.4;
+}
 .xai-muted {font-size:.74rem;color:#A9B8C8;}
 .xai-value {font-size:1.6rem;font-weight:800;color:#F1F6FA;margin:4px 0;}
 .xai-note {font-size:.72rem;color:#A9B8C8;margin-top:8px;}
@@ -173,60 +180,336 @@ ranked = pd.DataFrame({
 st.markdown('<div class="xai-label">WHY DID THE MODEL MAKE THIS PREDICTION?</div>', unsafe_allow_html=True)
 st.caption(f"Explaining TX-{index:07d} · {html.escape(str(row['type']))} · All contributions are in raw log-odds, not percentage points")
 
-left, right = st.columns([1.7, 1], gap="medium")
-with left:
-    st.markdown('<div class="xai-label">SHAP WATERFALL · FROM BASELINE TO PREDICTION</div>', unsafe_allow_html=True)
-    # A waterfall communicates how each feature moves the model from its
-    # baseline score to the selected transaction's output.
-    order = np.argsort(np.abs(impacts))
-    labels = ["Baseline"] + [FEATURES[i] for i in order] + ["Model output"]
-    values = [baseline] + [float(impacts[i]) for i in order] + [0]
-    measures = ["absolute"] + ["relative"] * len(order) + ["total"]
-    fig = go.Figure(go.Waterfall(
-        orientation="v", measure=measures, x=labels, y=values,
-        increasing={"marker": {"color": "#F17C94"}},
-        decreasing={"marker": {"color": "#54D4BE"}},
-        totals={"marker": {"color": "#7C9CFA"}},
-        connector={"line": {"color": "#546579", "width": 1}},
-        hovertemplate="%{x}<br>%{y:+.4f} log-odds<extra></extra>",
-    ))
-    fig.update_layout(
-        height=355, margin=dict(l=12, r=10, t=10, b=90),
-        paper_bgcolor="#1C2938", plot_bgcolor="#1C2938",
-        font=dict(color="#D5E1EC", size=10),
-        xaxis=dict(tickangle=-38, showgrid=False),
-        yaxis=dict(title="Model output (log-odds)", gridcolor="#334459"),
-        showlegend=False,
+
+# ============================================================
+# SHAP FEATURE IMPACT & MODEL EXPLANATION
+# ============================================================
+
+st.markdown("""
+<style>
+.xai-impact-title {
+    color: #D5E1EC;
+    font-size: .83rem;
+    font-weight: 750;
+    letter-spacing: .025em;
+    margin: 9px 0 11px;
+}
+
+.xai-summary-card {
+    background: linear-gradient(140deg, #1C2938, #202E40);
+    border: 1px solid #334459;
+    border-radius: 12px;
+    padding: 11px 14px;
+    margin-bottom: 6px;
+}
+
+.xai-summary-label {
+    color: #A9B8C8;
+    font-size: .76rem;
+    margin-bottom: 6px;
+}
+
+.xai-summary-value {
+    color: #F1F6FA;
+    font-size: 1.35rem;
+    font-weight: 800;
+}
+
+.xai-driver {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 0;
+    border-bottom: 1px solid #334459;
+    font-size: .82rem;
+}
+
+.xai-driver:last-child {
+    border-bottom: 0;
+}
+
+.xai-driver-name {
+    color: #D5E1EC;
+    font-weight: 650;
+    overflow-wrap: anywhere;
+}
+
+.xai-driver-value {
+    font-weight: 750;
+    white-space: nowrap;
+}
+
+.xai-explanation {
+    color: #A9B8C8;
+    font-size: .78rem;
+    line-height: 1.55;
+    margin-top: 11px;
+}
+
+@media (max-width: 900px) {
+    .xai-summary-card {
+        padding: 13px;
+    }
+}
+</style>
+""", unsafe_allow_html=True)
+
+
+def impact_color(value):
+    return "#F17C94" if value > 0 else "#54D4BE"
+
+
+def driver_row(feature, value):
+    color = impact_color(value)
+    return (
+        '<div class="xai-driver">'
+        f'<span class="xai-driver-name">{html.escape(str(feature))}</span>'
+        f'<span class="xai-driver-value" style="color:{color}">'
+        f'{value:+.3f}</span>'
+        '</div>'
     )
-    st.plotly_chart(fig, width="stretch", config={"displayModeBar": False})
+
+
+# SHAP values are already calculated above.
+# Sort by absolute impact, without changing the values.
+impact_df = ranked.copy()
+
+impact_df["Absolute impact"] = (
+    impact_df["SHAP (log-odds)"].abs()
+)
+
+impact_df = impact_df.sort_values(
+    "Absolute impact",
+    ascending=True,
+)
+
+# Largest absolute impact appears at the top of the chart.
+chart_features = impact_df["Feature"].astype(str).tolist()
+chart_values = impact_df["SHAP (log-odds)"].astype(float).tolist()
+
+bar_colors = [
+    impact_color(value)
+    for value in chart_values
+]
+
+left, right = st.columns([1.85, 1], gap="medium")
+
+# ============================================================
+# LEFT — FEATURE IMPACT CHART
+# ============================================================
+
+with left:
+    st.markdown(
+        '<div class="xai-impact-title">'
+        'SHAP FEATURE IMPACT · TRANSACTION LEVEL'
+        '</div>',
+        unsafe_allow_html=True,
+    )
+
+    fig = go.Figure()
+
+    fig.add_trace(
+        go.Bar(
+            x=chart_values,
+            y=chart_features,
+            orientation="h",
+            marker=dict(
+                color=bar_colors,
+                line=dict(width=0),
+            ),
+            customdata=np.abs(chart_values),
+            hovertemplate=(
+                "<b>%{y}</b><br>"
+                "SHAP contribution: %{x:+.4f} log-odds"
+                "<extra></extra>"
+            ),
+        )
+    )
+
+    max_abs = max(
+        float(np.max(np.abs(chart_values))),
+        0.1,
+    )
+
+    fig.update_layout(
+        height=320,
+        margin=dict(
+            l=10,
+            r=20,
+            t=15,
+            b=42,
+        ),
+        paper_bgcolor="#1C2938",
+        plot_bgcolor="#1C2938",
+        font=dict(
+            color="#D5E1EC",
+            size=11,
+        ),
+        bargap=0.32,
+        showlegend=False,
+        xaxis=dict(
+            title=dict(
+                text="SHAP contribution · log-odds",
+                font=dict(size=11),
+            ),
+            range=[-max_abs * 1.15, max_abs * 1.15],
+            gridcolor="#334459",
+            zeroline=True,
+            zerolinecolor="#8093A8",
+            zerolinewidth=1.5,
+            tickfont=dict(size=10),
+        ),
+        yaxis=dict(
+            title=None,
+            tickfont=dict(size=11),
+            automargin=True,
+            showgrid=False,
+        ),
+    )
+
+    st.plotly_chart(
+        fig,
+        width="stretch",
+        config={"displayModeBar": False},
+    )
+
+    st.markdown(
+        """
+        <div class="xai-note">
+          <span style="color:#F17C94">●</span>
+          Pink increases the model fraud score.
+          &nbsp;&nbsp;
+          <span style="color:#54D4BE">●</span>
+          Teal decreases it.
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+# ============================================================
+# RIGHT — MODEL EXPLANATION SUMMARY
+# ============================================================
 
 with right:
-    st.markdown('<div class="xai-label">KEY DRIVERS</div>', unsafe_allow_html=True)
-    positive = ranked[ranked["SHAP (log-odds)"] > 0].head(3)
-    negative = ranked[ranked["SHAP (log-odds)"] < 0].head(3)
-    st.markdown("**Increases fraud score**")
-    if positive.empty:
-        st.caption("No features increased the fraud score for this transaction.")
-    else:
-        for _, item in positive.iterrows():
-            st.markdown(f'<div class="xai-card" style="padding:8px 12px;margin-bottom:6px;border-left:3px solid #F17C94"><strong>{html.escape(str(item["Feature"]))}</strong><span style="float:right;color:#F17C94">{item["SHAP (log-odds)"]:+.3f}</span></div>', unsafe_allow_html=True)
-    st.markdown("**Decreases fraud score**")
-    if negative.empty:
-        st.caption("No features decreased the fraud score for this transaction.")
-    else:
-        for _, item in negative.iterrows():
-            st.markdown(f'<div class="xai-card" style="padding:8px 12px;margin-bottom:6px;border-left:3px solid #54D4BE"><strong>{html.escape(str(item["Feature"]))}</strong><span style="float:right;color:#54D4BE">{item["SHAP (log-odds)"]:+.3f}</span></div>', unsafe_allow_html=True)
+    st.markdown(
+        '<div class="xai-impact-title">'
+        'MODEL EXPLANATION SUMMARY'
+        '</div>',
+        unsafe_allow_html=True,
+    )
 
-st.markdown('<div class="xai-note"><span style="color:#F17C94">●</span> Pink increases the model fraud score. &nbsp; <span style="color:#54D4BE">●</span> Teal decreases it. &nbsp; SHAP explains model behavior, not causality.</div>', unsafe_allow_html=True)
+    score_pct = probability * 100
 
-with st.expander("Model Diagnostics · SHAP Validation", expanded=False):
+    score_color = (
+        "#F17C94"
+        if probability >= 0.5
+        else "#54D4BE"
+    )
+
+    st.markdown(
+        f"""
+        <div class="xai-summary-card">
+          <div class="xai-summary-label">
+            XGBoost fraud-class score · uncalibrated
+          </div>
+          <div class="xai-summary-value"
+               style="color:{score_color}">
+            {score_pct:.2f}%
+          </div>
+          <div class="xai-explanation">
+            Transaction TX-{index:07d}
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    top_positive = (
+        ranked[ranked["SHAP (log-odds)"] > 0]
+        .head(3)
+    )
+
+    top_negative = (
+        ranked[ranked["SHAP (log-odds)"] < 0]
+        .head(3)
+    )
+
+    st.markdown(
+        '<div class="xai-summary-card">'
+        '<div class="xai-summary-label">'
+        'INCREASES FRAUD SCORE'
+        '</div>'
+        + (
+            "".join(
+                driver_row(
+                    item["Feature"],
+                    float(item["SHAP (log-odds)"]),
+                )
+                for _, item in top_positive.iterrows()
+            )
+            if not top_positive.empty
+            else '<div class="xai-explanation">No positive contributions.</div>'
+        )
+        + '</div>',
+        unsafe_allow_html=True,
+    )
+
+    st.markdown(
+        '<div class="xai-summary-card">'
+        '<div class="xai-summary-label">'
+        'DECREASES FRAUD SCORE'
+        '</div>'
+        + (
+            "".join(
+                driver_row(
+                    item["Feature"],
+                    float(item["SHAP (log-odds)"]),
+                )
+                for _, item in top_negative.iterrows()
+            )
+            if not top_negative.empty
+            else '<div class="xai-explanation">No negative contributions.</div>'
+        )
+        + '</div>',
+        unsafe_allow_html=True,
+    )
+
+
+# ============================================================
+# MODEL DIAGNOSTICS
+# ============================================================
+
+with st.expander(
+    "Model Diagnostics · SHAP Validation",
+    expanded=False,
+):
     a, b, c = st.columns(3)
-    a.metric("Baseline margin", f"{baseline:+.4f}")
-    b.metric("Reconstructed margin", f"{reconstructed:+.4f}")
-    c.metric("Additivity difference", f"{consistency_gap:.6f}")
+
+    a.metric(
+        "Baseline margin",
+        f"{baseline:+.4f}",
+    )
+
+    b.metric(
+        "Reconstructed margin",
+        f"{reconstructed:+.4f}",
+    )
+
+    c.metric(
+        "Additivity difference",
+        f"{consistency_gap:.6f}",
+    )
+
     if consistency_gap > 1e-3:
-        st.warning("SHAP reconstruction differs from the model raw margin. Verify explainer/model compatibility.")
-    st.dataframe(ranked, hide_index=True, width="stretch")
+        st.warning(
+            "SHAP reconstruction differs from the model raw margin. "
+            "Verify explainer/model compatibility."
+        )
 
-st.caption("PaySim Dataset · XGBoost Model · Transaction-level Explainability")
-
+    st.dataframe(
+        ranked,
+        hide_index=True,
+        width="stretch",
+    )

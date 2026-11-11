@@ -1,4 +1,4 @@
-"""PaySim | Transaction Investigation — compact historical risk assessment."""
+"""PaySim | Risk Investigation — compact historical risk assessment."""
 from pathlib import Path
 import html
 import pickle
@@ -14,7 +14,7 @@ if str(APP_DIR) not in sys.path:
 
 from components.theme import apply_theme
 
-st.set_page_config(page_title='Transaction Investigation | PaySim', page_icon='🔎', layout='wide', initial_sidebar_state='expanded')
+st.set_page_config(page_title='Risk Investigation | PaySim', page_icon='🔎', layout='wide', initial_sidebar_state='expanded')
 apply_theme()
 
 FEATURES = [
@@ -72,33 +72,155 @@ def risk_band(score):
         return 'ELEVATED', '#E9BE74'
     return 'LOWER SCORE', '#54D4BE'
 
+
 st.markdown('''
 <style>
-  .block-container {padding-top:1.15rem !important; padding-bottom:1rem !important; max-width:1380px;}
-  div[data-testid="stVerticalBlock"] {gap:.50rem;}
-  div[data-testid="stHorizontalBlock"] {gap:.8rem;}
-  div[data-testid="stSelectbox"] label {font-size:.78rem !important; color:#A9B8C8 !important;}
-  .fi-eyebrow {font-size:.67rem; letter-spacing:.15em; font-weight:750; color:#54D4BE; margin:0 0 3px;}
-  .fi-heading {font-size:1.65rem; line-height:1.15; font-weight:760; color:#F1F6FA; margin:0;}
-  .fi-sub {font-size:.78rem; color:#A9B8C8; margin:5px 0 14px;}
-  .fi-label {font-size:.76rem; font-weight:750; color:#D5E1EC; margin:5px 0 6px;}
-  .fi-card {background:linear-gradient(140deg,#1C2938,#202E40); border:1px solid #334459; border-radius:14px; padding:15px 18px; min-height:178px;}
-  .fi-muted {font-size:.73rem; color:#A9B8C8;}
-  .fi-big {font-size:2.35rem; font-weight:800; letter-spacing:-.045em; line-height:1.18; margin:10px 0 11px;}
-  .fi-track {height:10px; background:#3A4A5B; border-radius:100px; overflow:hidden;}
-  .fi-status {display:flex; justify-content:space-between; gap:12px; align-items:center; margin:9px 0 0; font-size:.72rem;}
-  .fi-pair {display:flex; justify-content:space-between; gap:12px; padding:9px 0; border-bottom:1px solid #334459; font-size:.82rem;}
-  .fi-pair:last-child {border-bottom:0;}
-  .fi-pair span {color:#A9B8C8;}
-  .fi-pair strong {color:#F1F6FA; font-weight:700;}
-  .fi-profile {background:#1C2938; border:1px solid #334459; border-radius:14px; padding:13px 18px;}
-  .fi-profile-grid {display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:15px 24px;}
-  .fi-field-name {font-size:.71rem; color:#A9B8C8; margin-bottom:3px;}
-  .fi-field-value {font-size:.88rem; color:#F1F6FA; font-weight:650; overflow-wrap:anywhere;}
-  .fi-footer {font-size:.68rem; color:#9EAEBD; margin-top:10px;}
-  @media(max-width:850px){.fi-profile-grid{grid-template-columns:repeat(2,minmax(0,1fr));}}
+  .block-container {
+      padding-top: 1.15rem !important;
+      padding-bottom: 1rem !important;
+      max-width: 1380px;
+  }
+
+  div[data-testid="stVerticalBlock"] {
+      gap: .72rem;
+  }
+
+  div[data-testid="stHorizontalBlock"] {
+      gap: .9rem;
+  }
+
+  div[data-testid="stSelectbox"] label {
+      font-size: .83rem !important;
+      color: #A9B8C8 !important;
+  }
+
+  .fi-eyebrow {
+      font-size: .70rem;
+      letter-spacing: .15em;
+      font-weight: 750;
+      color: #54D4BE;
+      margin: 0 0 5px;
+  }
+
+  .fi-heading {
+      font-size: 1.8rem;
+      line-height: 1.15;
+      font-weight: 760;
+      color: #F1F6FA;
+      margin: 0;
+  }
+
+  .fi-sub {
+      font-size: .85rem;
+      color: #A9B8C8;
+      margin: 6px 0 16px;
+  }
+
+  .fi-label {
+      font-size: .82rem;
+      font-weight: 750;
+      color: #D5E1EC;
+      margin: 13px 0 9px;
+      line-height: 1.4;
+  }
+
+  .fi-card {
+      background: linear-gradient(140deg,#1C2938,#202E40);
+      border: 1px solid #334459;
+      border-radius: 14px;
+      padding: 19px 22px;
+      min-height: 190px;
+  }
+
+  .fi-muted {
+      font-size: .82rem;
+      color: #A9B8C8;
+  }
+
+  .fi-big {
+      font-size: 2.6rem;
+      font-weight: 800;
+      letter-spacing: -.045em;
+      line-height: 1.18;
+      margin: 12px 0;
+  }
+
+  .fi-track {
+      height: 10px;
+      background: #3A4A5B;
+      border-radius: 100px;
+      overflow: hidden;
+  }
+
+  .fi-status {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      margin: 12px 0 0;
+      font-size: .78rem;
+  }
+
+  .fi-pair {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px 0;
+      border-bottom: 1px solid #334459;
+      font-size: .88rem;
+  }
+
+  .fi-pair:last-child {
+      border-bottom: 0;
+  }
+
+  .fi-pair span {
+      color: #A9B8C8;
+  }
+
+  .fi-pair strong {
+      color: #F1F6FA;
+      font-weight: 700;
+  }
+
+  .fi-profile {
+      background: #1C2938;
+      border: 1px solid #334459;
+      border-radius: 14px;
+      padding: 20px 22px;
+  }
+
+  .fi-profile-grid {
+      display: grid;
+      grid-template-columns: repeat(3,minmax(0,1fr));
+      gap: 22px 28px;
+  }
+
+  .fi-field-name {
+      font-size: .79rem;
+      color: #A9B8C8;
+      margin-bottom: 5px;
+  }
+
+  .fi-field-value {
+      font-size: .98rem;
+      color: #F1F6FA;
+      font-weight: 650;
+      overflow-wrap: anywhere;
+  }
+
+  @media (max-width: 850px) {
+      .fi-profile-grid {
+          grid-template-columns: repeat(2,minmax(0,1fr));
+      }
+
+      .fi-card {
+          padding: 15px;
+      }
+  }
 </style>
 ''', unsafe_allow_html=True)
+
 
 try:
     model, df = load_model(), load_transactions()
@@ -107,8 +229,8 @@ except Exception as exc:
     st.stop()
 
 st.markdown('''<div class="fi-eyebrow">PAYSIM / RISK INTELLIGENCE</div>
-<div class="fi-heading">Transaction Investigation</div>
-<div class="fi-sub">Historical XGBoost risk assessment · Synthetic PaySim dataset · Not live monitoring</div>''', unsafe_allow_html=True)
+<div class="fi-heading">Risk Investigation</div>
+<div class="fi-sub">Transaction-Level Risk Assessment · XGBoost Fraud Detection</div>''', unsafe_allow_html=True)
 
 st.markdown('<div class="fi-label">SELECT TRANSACTION</div>', unsafe_allow_html=True)
 sel1, sel2 = st.columns([1, 2.5], gap='small')
@@ -149,7 +271,7 @@ with left:
     st.markdown('<div class="fi-label">MODEL RISK SCORE</div>', unsafe_allow_html=True)
     st.markdown(f'''
     <div class="fi-card">
-      <div class="fi-muted">XGBoost model output</div>
+      <div class="fi-muted">XGBoost risk score · uncalibrated</div>
       <div class="fi-big" style="color:{color}">{pct:.2f}%</div>
       <div class="fi-track"><div style="width:{pct:.3f}%;height:100%;background:{color};border-radius:100px"></div></div>
       <div class="fi-status"><span style="color:{color};font-weight:750">{safe(label)}</span><span style="color:#A9B8C8">Illustrative threshold</span></div>
@@ -197,4 +319,3 @@ if explain_page.is_file():
 else:
     st.caption('SHAP explanations will be available on the upcoming Explainable AI page.')
 
-st.markdown('''<div class="fi-footer">Research prototype · First 200,000 PaySim rows available for selection · Model outputs are not calibrated financial probabilities · Post-transaction balance features may introduce target leakage · Not suitable for operational decisions</div>''', unsafe_allow_html=True)
